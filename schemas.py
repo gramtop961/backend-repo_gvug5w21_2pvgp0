@@ -1,48 +1,67 @@
 """
-Database Schemas
+Database Schemas for WonderLens Chronicles
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a MongoDB collection.
+Collection name is the lowercase of the class name.
 """
+from typing import Optional, List, Dict
+from pydantic import BaseModel, Field, EmailStr
+from datetime import datetime
 
-from pydantic import BaseModel, Field
-from typing import Optional
-
-# Example schemas (replace with your own):
-
+# Core user profile
 class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    email: EmailStr = Field(..., description="Unique email for the user")
+    name: str = Field(..., description="Display name")
+    stage: str = Field(
+        "Awakening",
+        description="Current spiritual stage: Awakening, Healing, Embodiment, Manifestation, Communion",
+    )
+    avatar_url: Optional[str] = Field(None, description="Profile avatar URL")
+    locale: Optional[str] = Field("en", description="Language preference")
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+# Daily mantra record
+class Mantra(BaseModel):
+    email: EmailStr = Field(..., description="Owner email")
+    date: str = Field(..., description="ISO date (YYYY-MM-DD)")
+    mood: Optional[str] = Field(None, description="User-reported mood for the day")
+    stage: Optional[str] = Field(None, description="Stage used for generation")
+    journal_theme: Optional[str] = Field(None, description="Recent journal theme summary")
+    text: str = Field(..., description="Generated mantra text")
+    meaning: Optional[str] = Field(None, description="Short explanation/meaning of mantra")
 
-# Add your own schemas here:
-# --------------------------------------------------
+# Journal entry
+class JournalEntry(BaseModel):
+    email: EmailStr = Field(...)
+    content: str = Field(..., description="Full journal text or transcript")
+    mood: Optional[str] = Field(None, description="Detected or self-reported mood")
+    sentiment_score: Optional[float] = Field(
+        None, description="-1 to 1 sentiment score"
+    )
+    tags: Optional[List[str]] = Field(default_factory=list)
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+# Oracle queries / interpretations
+class OracleQuery(BaseModel):
+    email: EmailStr = Field(...)
+    input_text: str = Field(..., description="Dreams, symbols, or life events")
+    interpretation: Optional[str] = None
+
+# Meditation session logs (simple)
+class MeditationSession(BaseModel):
+    email: EmailStr
+    environment: str = Field(..., description="forest, mt-kenya, desert-temple")
+    minutes: int = Field(..., ge=1, le=240)
+
+# Course content (static placeholder structure)
+class Course(BaseModel):
+    slug: str
+    title: str
+    summary: str
+    level: str = Field("Initiate")
+
+# Progress tracking
+class Progress(BaseModel):
+    email: EmailStr
+    course_slug: str
+    completed_lessons: List[str] = Field(default_factory=list)
+    badge: Optional[str] = None
+
